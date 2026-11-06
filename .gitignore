@@ -1,0 +1,5 @@
+/config.php
+/.presentation-draft/
+/screenshots/*.html
+Thumbs.db
+.DS_Store
