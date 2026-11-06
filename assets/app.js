@@ -1,5 +1,5 @@
 const API = 'api/api.php';
-const state = { books: [], authors: [], categories: [], customers: [], orders: [] };
+const state = { comics: [], publishers: [], creators: [], genres: [], customers: [], orders: [] };
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
@@ -19,47 +19,50 @@ function showToast(message) {
 
 async function loadDashboard() {
   try {
-    const [books, authors, categories, customers, orders] = await Promise.all([
-      api('books'), api('authors'), api('categories'), api('customers'), api('orders')
+    const [comics, publishers, creators, genres, customers, orders] = await Promise.all([
+      api('comics'), api('publishers'), api('creators'), api('genres'), api('customers'), api('orders')
     ]);
-    Object.assign(state, { books, authors, categories, customers, orders });
+    Object.assign(state, { comics, publishers, creators, genres, customers, orders });
     renderDashboard();
   } catch (error) {
-    $('#bookRows').innerHTML = `<tr><td colspan="6" class="loading-cell">${escapeHtml(error.message)} Check your database connection and refresh.</td></tr>`;
+    $('#comicRows').innerHTML = `<tr><td colspan="7" class="loading-cell">${escapeHtml(error.message)} Check your database connection and refresh.</td></tr>`;
     $('#orderList').innerHTML = '<div class="loading-cell">Orders could not be loaded.</div>';
     showToast(error.message);
   }
 }
 
 function renderDashboard() {
-  const lowStock = state.books.filter(book => Number(book.stock_qty) < 8).length;
-  $('#totalBooks').textContent = state.books.length;
-  $('#stockUnits').textContent = state.books.reduce((sum, book) => sum + Number(book.stock_qty), 0).toLocaleString();
+  const lowStock = state.comics.filter(comic => Number(comic.stock_qty) < 8).length;
+  $('#totalComics').textContent = state.comics.length;
+  $('#stockUnits').textContent = state.comics.reduce((sum, comic) => sum + Number(comic.stock_qty), 0).toLocaleString();
   $('#activeOrders').textContent = state.orders.filter(order => ['Pending','Processing'].includes(order.status)).length;
   $('#lowStockCount').textContent = lowStock;
-  $('#navBookCount').textContent = state.books.length;
-  renderFilters(); renderBooks(); renderOrders();
+  $('#navComicCount').textContent = state.comics.length;
+  renderPublisherFilter(); renderComics(); renderOrders();
 }
 
-function renderFilters() {
-  const current = $('#categoryFilter').value;
-  $('#categoryFilter').innerHTML = '<option value="">All categories</option>' + state.categories.map(category =>
-    `<option value="${category.category_id}">${escapeHtml(category.category_name)}</option>`).join('');
-  $('#categoryFilter').value = current;
+function renderPublisherFilter() {
+  const current = $('#publisherFilter').value;
+  $('#publisherFilter').innerHTML = '<option value="">All publishers</option>' + state.publishers.map(publisher =>
+    `<option value="${publisher.publisher_id}">${escapeHtml(publisher.publisher_name)}</option>`).join('');
+  $('#publisherFilter').value = current;
 }
 
-function renderBooks() {
+function renderComics() {
   const query = $('#searchInput').value.trim().toLowerCase();
-  const category = $('#categoryFilter').value;
-  const books = state.books.filter(book => (!category || String(book.category_id) === category) &&
-    `${book.title} ${book.author_name} ${book.isbn}`.toLowerCase().includes(query));
-  $('#tableCount').textContent = `${books.length} ${books.length === 1 ? 'book' : 'books'} shown`;
-  if (!books.length) { $('#bookRows').innerHTML = '<tr><td colspan="6" class="loading-cell">No books match your search.</td></tr>'; return; }
-  $('#bookRows').innerHTML = books.map((book, index) => `<tr>
-    <td><div class="book-cell"><div class="book-cover cover-${index % 4}">${escapeHtml(book.title.slice(0,1))}</div><div><div class="book-title">${escapeHtml(book.title)}</div><div class="book-author">${escapeHtml(book.author_name)}</div></div></div></td>
-    <td>${escapeHtml(book.isbn)}</td><td><span class="category-pill">${escapeHtml(book.category_name)}</span></td>
-    <td class="price">${money(book.price)}</td><td><span class="stock-pill ${Number(book.stock_qty)<8?'stock-low':'stock-good'}">${Number(book.stock_qty)} ${Number(book.stock_qty)===1?'copy':'copies'}</span></td>
-    <td><div class="row-actions"><button class="row-action" data-edit="${book.book_id}" aria-label="Edit ${escapeHtml(book.title)}">✎</button><button class="row-action" data-delete="${book.book_id}" aria-label="Delete ${escapeHtml(book.title)}">×</button></div></td></tr>`).join('');
+  const publisher = $('#publisherFilter').value;
+  const comics = state.comics.filter(comic =>
+    (!publisher || String(comic.publisher_id) === publisher) &&
+    `${comic.title} ${comic.series_title} ${comic.issue_number} ${comic.creator_name} ${comic.catalog_code}`.toLowerCase().includes(query));
+  $('#tableCount').textContent = `${comics.length} ${comics.length === 1 ? 'edition' : 'editions'} shown`;
+  if (!comics.length) { $('#comicRows').innerHTML = '<tr><td colspan="7" class="loading-cell">No comics match your search.</td></tr>'; return; }
+  $('#comicRows').innerHTML = comics.map((comic, index) => `<tr>
+    <td><div class="comic-cell"><div class="comic-cover cover-${index % 4}">${escapeHtml(comic.publisher_name.startsWith('Marvel') ? 'M' : 'D')}</div><div><div class="comic-title">${escapeHtml(comic.title)}</div><div class="comic-subtitle">${escapeHtml(comic.series_title)} · ${escapeHtml(comic.creator_name)}</div></div></div></td>
+    <td><span class="publisher-pill ${comic.publisher_name.startsWith('Marvel') ? 'marvel' : 'dc'}">${escapeHtml(comic.publisher_name)}</span></td>
+    <td><span class="issue-number">#${escapeHtml(comic.issue_number)}</span><small class="format-label">${escapeHtml(comic.format)}</small></td>
+    <td><span class="grade-pill grade-${escapeHtml(comic.condition_grade)}">${escapeHtml(comic.condition_grade)}</span></td>
+    <td class="price">${money(comic.price)}</td><td><span class="stock-pill ${Number(comic.stock_qty)<8?'stock-low':'stock-good'}">${Number(comic.stock_qty)} ${Number(comic.stock_qty)===1?'copy':'copies'}</span></td>
+    <td><div class="row-actions"><button class="row-action" data-edit="${comic.comic_id}" aria-label="Edit ${escapeHtml(comic.title)}">✎</button><button class="row-action" data-delete="${comic.comic_id}" aria-label="Delete ${escapeHtml(comic.title)}">×</button></div></td></tr>`).join('');
 }
 
 function renderOrders() {
@@ -70,46 +73,62 @@ function renderOrders() {
   }).join('');
 }
 
-function openBookDialog(book = null) {
-  $('#bookForm').reset(); $('#formError').textContent = '';
-  $('#bookId').value = book?.book_id ?? '';
-  $('#dialogTitle').textContent = book ? 'Edit book details' : 'Add a book';
-  $('#bookTitle').value = book?.title ?? ''; $('#bookIsbn').value = book?.isbn ?? '';
-  $('#bookPublisher').value = book?.publisher ?? ''; $('#bookPrice').value = book?.price ?? '';
-  $('#bookStock').value = book?.stock_qty ?? 0;
-  $('#bookAuthor').innerHTML = state.authors.map(author => `<option value="${author.author_id}">${escapeHtml(author.name)}</option>`).join('');
-  $('#bookCategory').innerHTML = state.categories.map(category => `<option value="${category.category_id}">${escapeHtml(category.category_name)}</option>`).join('');
-  if (book) { $('#bookAuthor').value = book.author_id; $('#bookCategory').value = book.category_id; }
-  $('#bookDialog').showModal();
+function setOptions(selector, rows, idKey, labelKey, currentValue) {
+  $(selector).innerHTML = rows.map(row => `<option value="${row[idKey]}">${escapeHtml(row[labelKey])}</option>`).join('');
+  if (currentValue !== undefined && currentValue !== null) $(selector).value = String(currentValue);
 }
 
-$('#addBookButton').addEventListener('click', () => openBookDialog());
-$('#closeDialog').addEventListener('click', () => $('#bookDialog').close());
-$('#cancelDialog').addEventListener('click', () => $('#bookDialog').close());
-$('#searchInput').addEventListener('input', renderBooks);
-$('#categoryFilter').addEventListener('change', renderBooks);
+function openComicDialog(comic = null) {
+  $('#comicForm').reset(); $('#formError').textContent = '';
+  $('#comicId').value = comic?.comic_id ?? '';
+  $('#dialogTitle').textContent = comic ? 'Edit comic edition' : 'Add a comic';
+  $('#comicTitle').value = comic?.title ?? '';
+  $('#seriesTitle').value = comic?.series_title ?? '';
+  $('#issueNumber').value = comic?.issue_number ?? '';
+  $('#catalogCode').value = comic?.catalog_code ?? '';
+  $('#comicPrice').value = comic?.price ?? '';
+  $('#comicStock').value = comic?.stock_qty ?? 0;
+  setOptions('#comicPublisher',state.publishers,'publisher_id','publisher_name',comic?.publisher_id ?? state.publishers[0]?.publisher_id);
+  setOptions('#comicCreator',state.creators,'creator_id','creator_name',comic?.creator_id ?? state.creators[0]?.creator_id);
+  setOptions('#comicGenre',state.genres,'genre_id','genre_name',comic?.genre_id ?? state.genres[0]?.genre_id);
+  $('#comicFormat').value = comic?.format ?? 'Single Issue';
+  $('#conditionGrade').value = comic?.condition_grade ?? 'VF';
+  $('#comicDialog').showModal();
+}
+
+$('#addComicButton').addEventListener('click', () => openComicDialog());
+$('#closeDialog').addEventListener('click', () => $('#comicDialog').close());
+$('#cancelDialog').addEventListener('click', () => $('#comicDialog').close());
+$('#searchInput').addEventListener('input', renderComics);
+$('#publisherFilter').addEventListener('change', renderComics);
 $('#refreshButton').addEventListener('click', loadDashboard);
-$('#bookRows').addEventListener('click', async (event) => {
+
+$('#comicRows').addEventListener('click', async (event) => {
   const editId = event.target.closest('[data-edit]')?.dataset.edit;
   const deleteId = event.target.closest('[data-delete]')?.dataset.delete;
-  if (editId) openBookDialog(state.books.find(book => String(book.book_id) === editId));
+  if (editId) openComicDialog(state.comics.find(comic => String(comic.comic_id) === editId));
   if (deleteId) {
-    const book = state.books.find(item => String(item.book_id) === deleteId);
-    if (!confirm(`Delete “${book.title}” from the catalog?`)) return;
-    try { await api('books', { method: 'DELETE' }, deleteId); showToast('Book deleted.'); loadDashboard(); }
+    const comic = state.comics.find(item => String(item.comic_id) === deleteId);
+    if (!confirm(`Delete “${comic.title}” from the comic catalog?`)) return;
+    try { await api('comics', { method: 'DELETE' }, deleteId); showToast('Comic removed from the catalog.'); await loadDashboard(); }
     catch (error) { showToast(error.message); }
   }
 });
 
-$('#bookForm').addEventListener('submit', async (event) => {
+$('#comicForm').addEventListener('submit', async (event) => {
   event.preventDefault();
-  const id = $('#bookId').value;
-  const payload = { title: $('#bookTitle').value, isbn: $('#bookIsbn').value, publisher: $('#bookPublisher').value,
-    author_id: Number($('#bookAuthor').value), category_id: Number($('#bookCategory').value),
-    price: Number($('#bookPrice').value), stock_qty: Number($('#bookStock').value) };
+  const id = $('#comicId').value;
+  const payload = {
+    title: $('#comicTitle').value, series_title: $('#seriesTitle').value,
+    issue_number: $('#issueNumber').value, catalog_code: $('#catalogCode').value,
+    publisher_id: Number($('#comicPublisher').value), creator_id: Number($('#comicCreator').value),
+    genre_id: Number($('#comicGenre').value), format: $('#comicFormat').value,
+    condition_grade: $('#conditionGrade').value, price: Number($('#comicPrice').value),
+    stock_qty: Number($('#comicStock').value)
+  };
   try {
-    await api('books', { method: id ? 'PUT' : 'POST', body: JSON.stringify(payload) }, id);
-    $('#bookDialog').close(); showToast(id ? 'Book details updated.' : 'Book added to the catalog.'); await loadDashboard();
+    await api('comics', { method: id ? 'PUT' : 'POST', body: JSON.stringify(payload) }, id);
+    $('#comicDialog').close(); showToast(id ? 'Comic details updated.' : 'Comic added to the catalog.'); await loadDashboard();
   } catch (error) { $('#formError').textContent = error.message; }
 });
 
@@ -121,10 +140,10 @@ $('#orderList').addEventListener('change', async (event) => {
 });
 
 $('#exportButton').addEventListener('click', () => {
-  const headings = ['Book ID','ISBN','Title','Author','Category','Publisher','Price','Stock'];
-  const rows = state.books.map(book => [book.book_id,book.isbn,book.title,book.author_name,book.category_name,book.publisher,book.price,book.stock_qty]);
+  const headings = ['Comic ID','Catalog code','Title','Series','Issue or range','Publisher','Creator','Genre','Format','Condition','Price','Stock'];
+  const rows = state.comics.map(comic => [comic.comic_id,comic.catalog_code,comic.title,comic.series_title,comic.issue_number,comic.publisher_name,comic.creator_name,comic.genre_name,comic.format,comic.condition_grade,comic.price,comic.stock_qty]);
   const csv = [headings,...rows].map(row => row.map(value => `"${String(value ?? '').replaceAll('"','""')}"`).join(',')).join('\n');
-  const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download='book-inventory.csv'; link.click(); URL.revokeObjectURL(link.href);
+  const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download='comic-inventory.csv'; link.click(); URL.revokeObjectURL(link.href);
 });
 
 const now = new Date();

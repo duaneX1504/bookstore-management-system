@@ -1,43 +1,30 @@
-# Page & Pine Bookstore Manager
+# Panel & Page Comic Shop Manager
 
 **Project type:** Relational database application  
 **Author:** Duane Harris  
 **Technology:** PHP 8, PDO, MySQL 8, HTML, CSS, JavaScript  
 **Local environment:** XAMPP  
-**Repository URL:** https://github.com/duaneX1504/bookstore-management-system
+**Repository:** https://github.com/duaneX1504/bookstore-management-system
 
-Page & Pine is a small bookstore management system. It tracks a book catalog, available stock, customers, and customer orders. The dashboard supports book create, read, update, and delete actions, search and category filtering, CSV export, and order-status updates. REST-style JSON endpoints provide the database operations.
+Panel & Page is a small comic shop inventory and order manager. It tracks comics by series and issue range, publisher, lead creator, genre, format, condition grade, price, and stock. Its dashboard supports comic create, read, update, and delete actions, search and publisher filtering, CSV export, and order status updates. REST-style JSON endpoints connect the interface to MySQL.
+
+The sample inventory uses actual Marvel and DC comic titles. Marvel's official catalog lists [The Amazing Spider-Man](https://www.marvel.com/comics/series/32866/the_amazing_spider-man) and [X-Men: Days of Future Past](https://www.marvel.com/comics/collection/41778/x-men_days_of_future_past_tpb_new_printing_trade_paperback). DC publishes [Batman: Year One](https://www.dc.com/graphic-novels/batman-year-one-1987/absolute-batman-year-one) and [Watchmen](https://www.dc.com/graphic-novels/watchmen-1986/watchmen). Store prices, inventory quantities, condition grades, and catalog_code values are fictional practice data. A catalog code is an in-store identifier, not a publisher UPC.
 
 ## Features
 
-- Manage books, including ISBN, title, author, category, publisher, price, and stock.
-- Store author, category, and customer records in separate related tables.
-- Create orders containing one or more books. The API checks stock, saves the order and its line items in a transaction, and reduces stock.
-- Update order status. Cancelling an order restores its reserved stock.
-- View order totals and line items, and search/filter the book inventory.
-- Export the current book catalog as CSV.
+- Manage comic editions, including title, series, issue range, publisher, lead creator, genre, format, condition, price, and stock.
+- Store publishers, creators, genres, customers, comics, orders, and order lines in related tables.
+- Create orders containing multiple comics. The API checks stock, stores the order and line items in a transaction, and reduces stock.
+- Cancel an order to restore the copies reserved for it.
+- Search by comic title, series, issue range, creator, or catalog code; filter by publisher.
+- Export the comic catalog as CSV.
 - Use prepared statements, input validation, JSON responses, HTTP status codes, and relational foreign-key constraints.
 
 ## Database design
 
-The schema uses six tables. `books` references `authors` and `categories`. `orders` references `customers`. `order_items` connects orders to books and uses a composite primary key so one book appears at most once per order. The unit price is saved with the order item so an order retains the price charged at checkout.
+The schema has seven tables. comics references publishers, creators, and genres. orders references customers. order_items connects orders to comics with a composite primary key (order_id, comic_id), which prevents duplicate lines for the same edition in one order. Each order line stores quantity and the unit price charged at the time of sale.
 
-```mermaid
-erDiagram
-  AUTHORS ||--o{ BOOKS : writes
-  CATEGORIES ||--o{ BOOKS : classifies
-  CUSTOMERS ||--o{ ORDERS : places
-  ORDERS ||--|{ ORDER_ITEMS : contains
-  BOOKS ||--o{ ORDER_ITEMS : appears_in
-  AUTHORS { int author_id PK string name }
-  CATEGORIES { int category_id PK string category_name }
-  BOOKS { int book_id PK string isbn string title int author_id FK int category_id FK decimal price int stock_qty }
-  CUSTOMERS { int customer_id PK string full_name string email }
-  ORDERS { int order_id PK int customer_id FK datetime order_date string status }
-  ORDER_ITEMS { int order_id PK_FK int book_id PK_FK int quantity decimal unit_price }
-```
-
-The schema enforces unique ISBNs, unique author emails when provided, unique customer emails, unique category names, valid foreign keys, nonnegative prices and stock, and positive order quantities. Order creation and stock deduction happen inside a database transaction.
+Each comic record identifies one lead creator for this compact class project. A larger store could use a comic_creators junction table to record multiple writers, artists, inkers, and colorists per edition. See screenshots/database-erd.png for the relational diagram.
 
 ## Requirements
 
@@ -47,106 +34,73 @@ The schema enforces unique ISBNs, unique author emails when provided, unique cus
 
 ## Recreate the project in XAMPP
 
-1. Copy the `bookstore-management-system` folder into `C:\xampp\htdocs\`.
+1. Copy the bookstore-management-system folder into C:\xampp\htdocs\.
 2. Start **Apache** and **MySQL** from the XAMPP Control Panel.
-3. Open `http://localhost/phpmyadmin`.
-4. Select **Import**, choose `database/schema.sql`, then select **Import**. This creates and seeds `bookstore_db`.
-5. Copy `config.example.php` to `config.php`. The defaults work with a standard local XAMPP installation (`127.0.0.1`, database `bookstore_db`, user `root`, blank password). If your MySQL password differs, update `config.php`.
-6. Open `http://localhost/bookstore-management-system/`.
+3. Open http://localhost/phpmyadmin.
+4. Select **Import**, choose database/schema.sql, then select **Import**. This creates and seeds comic_store_db.
+5. Copy config.example.php to config.php. The defaults work with a standard local XAMPP installation (127.0.0.1, database comic_store_db, user root, blank password). If your MySQL password differs, update config.php.
+6. Open http://localhost/bookstore-management-system/.
 
-The SQL file includes sample authors, categories, books, customers, and orders, so the dashboard has data on first launch. The project uses its own `bookstore_db` database and does not modify `university_practice`.
+The SQL file supplies sample Marvel and DC editions, creators, customers, and orders, so the dashboard has data on first launch. This project uses its own comic_store_db database and does not modify bookstore_db or university_practice.
 
 ## API reference
 
-Base URL: `http://localhost/bookstore-management-system/api/api.php`
+Base URL: http://localhost/bookstore-management-system/api/api.php
 
-Pass a resource name in the query string: `books`, `authors`, `categories`, `customers`, or `orders`.
+Pass one of these resource names in the query string: comics, publishers, creators, genres, customers, or orders.
 
 | Operation | HTTP request | Result |
 | --- | --- | --- |
-| List books | `GET ?resource=books` | Book records with author and category names |
-| Read a book | `GET ?resource=books&id=1` | One book or `404` |
-| Add a book | `POST ?resource=books` | Creates a book and returns `201` |
-| Update a book | `PUT ?resource=books&id=1` | Updates book fields |
-| Delete a book | `DELETE ?resource=books&id=1` | Deletes the book if no order line refers to it |
-| List orders | `GET ?resource=orders` | Orders with customer, total, and line items |
-| Create order | `POST ?resource=orders` | Saves an order and deducts available stock |
-| Update order status | `PUT ?resource=orders&id=1` | Changes order status |
-| Delete order | `DELETE ?resource=orders&id=1` | Deletes the order and restores reserved stock |
+| List comics | GET ?resource=comics | Comic editions with publisher, creator, and genre names |
+| Read one comic | GET ?resource=comics&id=1 | One comic or 404 |
+| Add a comic | POST ?resource=comics | Creates a comic and returns 201 |
+| Update a comic | PUT ?resource=comics&id=1 | Updates comic fields |
+| Delete a comic | DELETE ?resource=comics&id=1 | Deletes an edition when no order line refers to it |
+| List orders | GET ?resource=orders | Orders with customer, totals, and comic line items |
+| Create an order | POST ?resource=orders | Saves an order and deducts stock |
+| Update order status | PUT ?resource=orders&id=1 | Changes order status |
+| Delete an order | DELETE ?resource=orders&id=1 | Deletes an order and restores reserved stock |
 
-Example create-book JSON:
+Example create-comic JSON:
 
-```json
-{
-  "isbn": "9780000000001",
-  "title": "Example Book",
-  "author_id": 1,
-  "category_id": 1,
-  "publisher": "Example Press",
-  "price": 18.99,
-  "stock_qty": 12
-}
-```
+    {
+      "catalog_code": "DC-BAT-Y1",
+      "title": "Batman: Year One",
+      "series_title": "Batman",
+      "issue_number": "404–407",
+      "publisher_id": 2,
+      "creator_id": 4,
+      "genre_id": 4,
+      "format": "Trade Paperback",
+      "condition_grade": "VF",
+      "price": 14.99,
+      "stock_qty": 12
+    }
 
 Example create-order JSON:
 
-```json
-{
-  "customer_id": 1,
-  "items": [
-    { "book_id": 1, "quantity": 2 },
-    { "book_id": 2, "quantity": 1 }
-  ]
-}
-```
+    {
+      "customer_id": 1,
+      "items": [
+        { "comic_id": 1, "quantity": 2 },
+        { "comic_id": 5, "quantity": 1 }
+      ]
+    }
 
-The API returns JSON. Typical response codes include `200` for successful reads/updates/deletes, `201` for a successful create, `400` for an invalid request, `404` for a missing resource, `409` for a duplicate or related-record conflict, and `422` for invalid values.
+The API returns JSON. Typical responses include 200 for successful reads or updates, 201 for a successful create, 400 for malformed requests, 404 for missing records, 409 for a duplicate or related-record conflict, and 422 for invalid values.
 
 ## Postman demonstration
 
-1. Create a request with method **GET** and URL `http://localhost/bookstore-management-system/api/api.php?resource=books`.
-2. Select **Send** and show the JSON book list.
-3. Create a **POST** request to the same URL, select **Body → raw → JSON**, and paste the create-book example. Select **Send** and show the `201` response.
-4. Use **PUT** with `?resource=books&id=5` and a complete JSON book record to change the new book's stock or price.
-5. Use **DELETE** with `?resource=books&id=5` to remove the test record.
-6. To demonstrate order and stock behavior, POST the example order to `?resource=orders`, then GET `?resource=books` and point out the reduced stock. Change the order status to `Cancelled` with PUT `?resource=orders&id=<returned id>` and show stock restored.
-
-## Repository setup
-
-The source is published at [github.com/duaneX1504/bookstore-management-system](https://github.com/duaneX1504/bookstore-management-system). To download the project with Git and its version history, run:
-
-```bash
-git clone https://github.com/duaneX1504/bookstore-management-system.git
-cd bookstore-management-system
-```
-
-Do not commit a `config.php` containing a real database password. The repository includes `config.example.php` for local setup.
+1. Send a **GET** request to http://localhost/bookstore-management-system/api/api.php?resource=comics and show the Marvel and DC records.
+2. Send a **POST** request to the same URL. Choose **Body → raw → JSON**, paste the create-comic example, and show the 201 response.
+3. Use **PUT** with ?resource=comics&id=9 and a complete comic record to change its price or stock.
+4. Use **DELETE** with ?resource=comics&id=9 to remove the temporary test record.
+5. POST the example order to ?resource=orders, GET ?resource=comics and point out the reduced stock, then change the order status to Cancelled with PUT ?resource=orders&id=<returned id> and show that stock is restored.
 
 ## Project structure
 
-```text
-bookstore-management-system/
-├── api/
-│   ├── api.php
-│   └── db.php
-├── assets/
-│   ├── app.js
-│   └── styles.css
-├── database/
-│   └── schema.sql
-├── docs/
-│   ├── class-presentation.pptx
-│   ├── project-report.docx
-│   └── PROJECT_REPORT.md
-├── screenshots/
-│   ├── bookstore-dashboard.png
-│   ├── book-form.png
-│   └── database-erd.png
-├── config.example.php
-├── index.php
-└── README.md
-```
+The source is organized into api (PHP JSON API and database connection), assets (dashboard JavaScript and CSS), database/schema.sql (schema and sample inventory), docs (report and presentation), screenshots (dashboard, comic form, and ER diagram), config.example.php (local database settings), and index.php (comic shop dashboard).
 
-## Known scope
+## Scope
 
-This is a classroom demonstration system. It does not include user accounts, staff permissions, payment processing, shipping-provider integration, or production hosting. The sample records are fictional and can be changed in `database/schema.sql`.
+This classroom demonstration does not include logins, staff permissions, payment processing, shipping-provider integration, barcode scanning, or public hosting. The sample stock, grades, and store prices are fictional. The comic titles are real, and the schema can be extended to track multiple credited creators and publisher issue identifiers.

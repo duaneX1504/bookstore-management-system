@@ -1,0 +1,65 @@
+digraph ComicShop {
+  graph [rankdir=TB, bgcolor="#FFFFFF", pad="0.35", nodesep="0.48", ranksep="0.72", fontname="Arial", label="PANEL & PAGE  •  COMIC SHOP DATABASE", labelloc=t, fontsize=22, fontcolor="#111827"];
+  node [shape=plain, fontname="Arial"];
+  edge [color="#7C8494", fontname="Arial", fontsize=10, arrowsize=0.75];
+
+  publishers [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" COLOR="#D9DDE5">
+      <TR><TD BGCOLOR="#DC2438"><FONT COLOR="white"><B>PUBLISHERS</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT">PK  publisher_id</TD></TR>
+      <TR><TD ALIGN="LEFT">UQ  publisher_name</TD></TR>
+    </TABLE>>];
+  creators [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" COLOR="#D9DDE5">
+      <TR><TD BGCOLOR="#111827"><FONT COLOR="white"><B>CREATORS</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT">PK  creator_id</TD></TR>
+      <TR><TD ALIGN="LEFT">UQ  creator_name</TD></TR>
+    </TABLE>>];
+  genres [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" COLOR="#D9DDE5">
+      <TR><TD BGCOLOR="#3653A5"><FONT COLOR="white"><B>GENRES</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT">PK  genre_id</TD></TR>
+      <TR><TD ALIGN="LEFT">UQ  genre_name</TD></TR>
+    </TABLE>>];
+  comics [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" COLOR="#D9DDE5">
+      <TR><TD BGCOLOR="#DC2438"><FONT COLOR="white"><B>COMICS</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT">PK  comic_id</TD></TR>
+      <TR><TD ALIGN="LEFT">UQ  catalog_code</TD></TR>
+      <TR><TD ALIGN="LEFT">title, series_title, issue_number</TD></TR>
+      <TR><TD ALIGN="LEFT">FK  publisher_id</TD></TR>
+      <TR><TD ALIGN="LEFT">FK  creator_id</TD></TR>
+      <TR><TD ALIGN="LEFT">FK  genre_id</TD></TR>
+      <TR><TD ALIGN="LEFT">format, condition_grade, price, stock_qty</TD></TR>
+    </TABLE>>];
+  customers [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" COLOR="#D9DDE5">
+      <TR><TD BGCOLOR="#3653A5"><FONT COLOR="white"><B>CUSTOMERS</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT">PK  customer_id</TD></TR>
+      <TR><TD ALIGN="LEFT">full_name, email, phone</TD></TR>
+    </TABLE>>];
+  orders [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" COLOR="#D9DDE5">
+      <TR><TD BGCOLOR="#111827"><FONT COLOR="white"><B>ORDERS</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT">PK  order_id</TD></TR>
+      <TR><TD ALIGN="LEFT">FK  customer_id</TD></TR>
+      <TR><TD ALIGN="LEFT">order_date, status</TD></TR>
+    </TABLE>>];
+  order_items [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" COLOR="#D9DDE5">
+      <TR><TD BGCOLOR="#111827"><FONT COLOR="white"><B>ORDER_ITEMS</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT">PK / FK  order_id</TD></TR>
+      <TR><TD ALIGN="LEFT">PK / FK  comic_id</TD></TR>
+      <TR><TD ALIGN="LEFT">quantity, unit_price</TD></TR>
+    </TABLE>>];
+
+  {rank=same; publishers; creators; genres}
+  {rank=same; comics; customers}
+  {rank=same; order_items; orders}
+  publishers -> comics [label="1 to many"];
+  creators -> comics [label="1 to many"];
+  genres -> comics [label="1 to many"];
+  customers -> orders [label="1 to many"];
+  comics -> order_items [label="1 to many"];
+  orders -> order_items [label="1 to many"];
+}
