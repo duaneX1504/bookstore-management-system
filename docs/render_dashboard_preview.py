@@ -43,7 +43,7 @@ def dashboard(form=False):
     txt(d, (69, 25), "panel & page", 17, C["ink"], True, True)
     txt(d, (70, 49), "C O M I C   S H O P   M A N A G E R", 6, "#9398A3", True)
     txt(d, (27, 112), "S H O P   W O R K S P A C E", 8, "#9398A3", True)
-    for y, label, icon, active in [(145, "Overview", "▦", True), (188, "Comic inventory", "▤", False), (231, "Orders", "▧", False), (274, "Publishers", "◫", False)]:
+    for y, label, icon, active in [(145, "Overview", "▦", True), (188, "Comic inventory", "▤", False), (231, "Orders", "▧", False), (274, "Publishers", "◫", False), (317, "Creators", "✎", False)]:
         if active:
             box(d, (15, y-8, 225, y+29), "#FFF0ED", radius=8)
         txt(d, (31, y), icon, 16, C["red"] if active else "#6F7480", True)
@@ -61,10 +61,10 @@ def dashboard(form=False):
 
     rule(d, [(242, 60), (W, 60)])
     txt(d, (275, 24), "Shop workspace   /   Overview", 10, "#858A96")
-    txt(d, (1153, 24), "Fri, Nov 6, 2026", 9, "#999DA6")
+    txt(d, (1153, 24), "Tue, Nov 10, 2026", 9, "#999DA6")
     box(d, (1366, 16, 1394, 44), "#EEE7DF", radius=14)
     txt(d, (1372, 24), "DH", 8, "#706149", True)
-    txt(d, (275, 88), "F R I D A Y ,   N O V E M B E R   6 ,   2 0 2 6", 8, "#969BA5", True)
+    txt(d, (275, 88), "T U E S D A Y ,   N O V E M B E R   1 0 ,   2 0 2 6", 8, "#969BA5", True)
     txt(d, (275, 111), "Welcome back, Store Admin", 23, C["ink"], True, True)
     txt(d, (640, 119), "✦", 14, "#C7A65B", True)
     txt(d, (275, 148), "Here’s what’s happening at your comic shop today.", 11, "#858A96")
@@ -186,6 +186,62 @@ def dashboard(form=False):
         txt(d, (916, 779), "Save comic", 9, C["white"], True)
     return im
 
+def management_preview(kind):
+    im = Image.new("RGB", (W, H), C["paper"])
+    d = ImageDraw.Draw(im)
+    d.rectangle((0,0,242,H), fill=C["white"]); rule(d,[(241,0),(241,H)])
+    box(d,(25,25,60,60),C["navy"],radius=9); txt(d,(37,30),"P",20,C["white"],True,True)
+    txt(d,(69,25),"panel & page",17,C["ink"],True,True); txt(d,(70,49),"C O M I C   S H O P   M A N A G E R",6,"#9398A3",True)
+    txt(d,(27,112),"S H O P   W O R K S P A C E",8,"#9398A3",True)
+    active = {"publishers":"Publishers","creators":"Creators","orders":"Orders"}[kind]
+    for y,label,icon in [(145,"Overview","▦"),(188,"Comic inventory","▤"),(231,"Orders","▧"),(274,"Publishers","◫"),(317,"Creators","✎")]:
+        selected = label == active
+        if selected: box(d,(15,y-8,225,y+29),"#FFF0ED",radius=8)
+        txt(d,(31,y),icon,16,C["red"] if selected else "#6F7480",True)
+        txt(d,(61,y+2),label,11,C["red_dark"] if selected else "#6F7480",selected)
+    rule(d,[(242,60),(W,60)]); txt(d,(275,24),f"Shop workspace   /   {active}",10,"#858A96")
+    title = {"publishers":"Publishers","creators":"Creators","orders":"Customer orders"}[kind]
+    subtitle = {"publishers":"Manage the publishers attached to comic editions.","creators":"Manage the lead creators attached to comic editions.","orders":"Review order lines, change status, or place a new order."}[kind]
+    action = {"publishers":"+  Add publisher","creators":"+  Add creator","orders":"+  Create order"}[kind]
+    txt(d,(275,96),"C A T A L O G   S E T T I N G S" if kind != "orders" else "S A L E S",8,"#9398A3",True)
+    txt(d,(275,120),title,23,C["ink"],True,True); txt(d,(275,157),subtitle,10,"#858A96")
+    box(d,(1195,112,1395,150),C["red"],radius=7); txt(d,(1210,124),action,9,C["white"],True)
+    box(d,(275,194,1395,890),C["white"],C["line"],9)
+    if kind == "publishers":
+        headers=[("PUBLISHER",305),("COMICS",1000),("ACTIONS",1250)]
+        rows=[("Marvel Comics","4"),("DC Comics","4"),("Image Comics","0")]
+        widths=[(305,900),(1000,1050),(1250,1370)]
+    elif kind == "creators":
+        headers=[("CREATOR",305),("COMICS",1000),("ACTIONS",1250)]
+        rows=[("Stan Lee","1"),("Chris Claremont","1"),("Ta-Nehisi Coates","1"),("Frank Miller","2"),("Alan Moore","1"),("Mark Millar","1"),("Greg Rucka","1"),("Brian Michael Bendis","0")]
+        widths=[(305,900),(1000,1050),(1250,1370)]
+    else:
+        headers=[("ORDER / CUSTOMER",305),("COMICS",590),("TOTAL",990),("STATUS",1100),("ACTIONS",1270)]
+        rows=[("#2048  Morgan Reed","Spider-Man #1 · X-Men #141–142","$25.98","Processing"),("#2047  Avery Johnson","Black Panther · Book 1","$17.99","Pending"),("#2046  Morgan Reed","Batman: Year One #404–407","$14.99","Shipped"),("#2045  Avery Johnson","Watchmen #1–12","$19.99","Cancelled")]
+        widths=None
+    for label,x in headers: txt(d,(x,222),label,8,"#9297A1",True)
+    rule(d,[(300,247),(1370,247)])
+    y=273
+    for idx,row in enumerate(rows):
+        if kind=="orders":
+            txt(d,(305,y),row[0],10,"#383B45",True); txt(d,(590,y),row[1],9,"#777D88"); txt(d,(990,y),row[2],10,C["ink"],True)
+            bg,fg=({"Processing":("#FFF0ED",C["red_dark"]),"Pending":("#FFF3E5",C["orange"]),"Shipped":("#EAF5EF",C["green"]),"Cancelled":("#F3F3F5","#777D88")})[row[3]]
+            box(d,(1100,y-5,1200,y+19),bg,radius=10); txt(d,(1110,y+1),row[3],8,fg,True); txt(d,(1270,y),"Change status   Delete",8,C["red_dark"],True)
+        else:
+            txt(d,(305,y),row[0],11,C["ink"],True); txt(d,(1000,y),row[1],10,"#666B76"); txt(d,(1250,y),"Edit   Delete",9,C["red_dark"],True)
+        rule(d,[(300,y+38),(1370,y+38)]); y+=74
+    if kind != "orders":
+        box(d,(305,805,1368,855),"#F8F6F2",radius=7)
+        txt(d,(321,821),"Linked records are protected",9,"#756C58",True)
+        txt(d,(525,821),"Reassign or remove comic references before deleting a publisher or creator.",9,"#898477")
+    else:
+        txt(d,(305,836),"Cancelling or deleting an active order returns its reserved copies to inventory.",9,"#898477")
+    txt(d,(275,930),"Panel & Page Comic Shop Manager",8,"#9B9FAA")
+    txt(d,(1260,930),"Track every issue",8,"#9B9FAA")
+    return im
+
 dashboard().save(OUT / "bookstore-dashboard.png")
 dashboard(True).save(OUT / "book-form.png")
-print("Wrote comic shop dashboard and comic entry form previews.")
+for screen in ("publishers","creators","orders"):
+    management_preview(screen).save(OUT / f"{screen}-manager.png")
+print("Wrote dashboard, comic form, catalog, and orders UI previews.")

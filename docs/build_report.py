@@ -153,7 +153,15 @@ doc.add_paragraph(
     "The dashboard summarizes the number of comic editions, available copies, open orders, and low-stock "
     "editions. Staff can create, read, update, and delete comic records. The form stores comic metadata and "
     "store inventory information. Search includes title, series, issue range, creator, and catalog code. "
-    "A publisher filter narrows the catalog, while CSV export downloads the current inventory."
+    "A publisher filter narrows the catalog, while CSV export downloads the current inventory. Sidebar links "
+    "open dedicated Orders, Publishers, and Creators sections. Publishers and creators can be added, renamed, "
+    "or deleted when they are not referenced by a comic."
+)
+doc.add_paragraph(
+    "The Orders section can place orders for existing customers, show each order's comic lines and total, "
+    "change its status, cancel it, or delete it. Cancelling or deleting an active order returns reserved copies "
+    "to stock. Order lines and sale prices stay fixed after checkout to preserve the sale record; correct an order "
+    "by cancelling or deleting it and creating a replacement."
 )
 doc.add_paragraph(
     "The PHP API uses prepared PDO statements and validates incoming values. Comics, publishers, creators, "
@@ -178,6 +186,29 @@ p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 p.add_run().add_picture(str(ROOT / "screenshots" / "book-form.png"), width=Inches(6.1))
 caption("Figure 3. Add-comic form preview")
 
+doc.add_heading("Publisher and creator management", level=1)
+doc.add_paragraph(
+    "The sidebar opens separate management screens for publishers and creators. Staff can add new records, "
+    "rename existing records, or delete records that are not referenced by a comic. The relational database "
+    "rejects a delete if a comic still depends on that publisher or creator."
+)
+p = doc.add_paragraph()
+p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+p.add_run().add_picture(str(ROOT / "screenshots" / "publishers-manager.png"), width=Inches(3.25))
+p.add_run().add_picture(str(ROOT / "screenshots" / "creators-manager.png"), width=Inches(3.25))
+caption("Figure 4. Publisher and creator management screens")
+
+doc.add_heading("Order management", level=1)
+doc.add_paragraph(
+    "The Orders section lets staff place an order for a customer, select comics and quantities, review line items "
+    "and totals, and change an order's status. Cancelling or deleting an active order restores reserved stock. "
+    "The charged prices and comic lines are fixed after checkout so the original sale record remains accurate."
+)
+p = doc.add_paragraph()
+p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+p.add_run().add_picture(str(ROOT / "screenshots" / "orders-manager.png"), width=Inches(6.4))
+caption("Figure 5. Order management with status and delete actions")
+
 doc.add_heading("Setup and class demonstration", level=1)
 doc.add_paragraph(
     "To recreate the project, place the folder in C:\\xampp\\htdocs, start Apache and MySQL, import "
@@ -186,22 +217,17 @@ doc.add_paragraph(
 )
 for item in [
     "Show the Marvel and DC sample editions, then create or edit a temporary comic record.",
-    "Use Postman to place an order and point out the stock deduction.",
-    "Cancel the order and show the reserved copies return to inventory.",
+    "Add a publisher or creator and show that linked records cannot be deleted while comics use them.",
+    "Create an order in the Orders section, update its status, then cancel it and show stock return.",
     "Explain the foreign keys, order_items composite key, prepared statements, and transaction rollback.",
 ]:
     bullet(item)
 
 doc.add_heading("Project repository and title references", level=1)
 doc.add_paragraph("GitHub: https://github.com/duaneX1504/bookstore-management-system")
-doc.add_paragraph("Marvel catalog: https://www.marvel.com/comics/series/32866/the_amazing_spider-man")
-doc.add_paragraph("Marvel collection: https://www.marvel.com/comics/collection/41778/x-men_days_of_future_past_tpb_new_printing_trade_paperback")
-doc.add_paragraph("DC graphic novel: https://www.dc.com/graphic-novels/batman-year-one-1987/absolute-batman-year-one")
-doc.add_paragraph("DC graphic novel: https://www.dc.com/graphic-novels/watchmen-1986/watchmen")
+doc.add_paragraph("Official Marvel and DC catalog links for the sample titles are included in the repository README.")
 doc.add_paragraph(
-    "The project is a classroom demonstration. It does not include user accounts, payment processing, "
-    "shipping integrations, barcode scanning, or public hosting. A future version could support multiple "
-    "credited creators per edition with a comic_creators junction table."
+    "Scope: classroom demonstration without logins, payment processing, shipping, or barcode scanning."
 )
 
 footer = section.footer.paragraphs[0]

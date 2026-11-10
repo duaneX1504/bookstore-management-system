@@ -41,7 +41,9 @@ The schema uses unique constraints for publisher names, creator names, genre nam
 
 ## Frontend
 
-The dashboard shows the number of catalog editions, total copies on hand, open orders, and low-stock editions. Its inventory table displays a comic title and series, publisher, issue or collected range, format, grade, price, and stock. Staff can search by title, series, issue, creator, or in-store catalog code and filter by publisher. The comic form supports create and update operations. Row actions delete editions when no order refers to them. The export button downloads the catalog as CSV.
+The dashboard shows the number of catalog editions, total copies on hand, open orders, and low-stock editions. Its inventory table displays a comic title and series, publisher, issue or collected range, format, grade, price, and stock. Staff can search by title, series, issue, creator, or in-store catalog code and filter by publisher. The comic form supports create and update operations. Row actions delete editions when no order refers to them. The export button downloads the catalog as CSV. The sidebar opens dedicated Orders, Publishers, and Creators sections.
+
+Publisher and creator screens support adding, renaming, and deleting records. Foreign keys prevent deleting a publisher or creator while a comic still references it. The Orders screen can place orders for existing customers, show each order's comics and total, change order status, cancel an order, or delete it. Cancelling or deleting an active order restores its reserved stock. Order line items and sale prices remain fixed after checkout so the order keeps its original details; to correct an order, cancel or delete it and create a replacement.
 
 ### Comic shop dashboard
 
@@ -54,6 +56,19 @@ The preview below shows the seeded Marvel and DC examples with the inventory con
 The form stores comic and edition metadata, a store-assigned code, publisher, lead creator, genre, format, grade, price, and stock.
 
 ![Comic entry form preview](../screenshots/book-form.png)
+
+### Publisher and creator management
+
+Staff can add, rename, and delete publisher and creator records. Foreign keys block deleting a record that is still assigned to a comic.
+
+![Publisher management screen](../screenshots/publishers-manager.png)
+![Creator management screen](../screenshots/creators-manager.png)
+
+### Order management
+
+The Orders section places orders for existing customers, shows comic line items and totals, changes statuses, cancels orders, and deletes orders. Cancelling or deleting an active order restores reserved stock. Order lines and sale prices are fixed after checkout to preserve the sale record; create a replacement order to correct its contents.
+
+![Order management screen](../screenshots/orders-manager.png)
 
 ## Backend API
 
@@ -73,7 +88,7 @@ Example endpoints:
 
 To recreate the application, copy the project folder into C:\xampp\htdocs, start Apache and MySQL, import database/schema.sql through phpMyAdmin, copy config.example.php to config.php, and visit http://localhost/bookstore-management-system/. The SQL file creates comic_store_db and inserts sample Marvel and DC catalog records.
 
-For the class demonstration, show the comic catalog and database relationships, then add a temporary comic through the dashboard. Use Postman to create an order containing catalog comics and show the reduced stock. Change the order status to Cancelled and show the copies return to inventory.
+For the class demonstration, show the comic catalog and database relationships, then add a temporary comic through the dashboard. Add a publisher or creator from its sidebar section and show that the database protects a record still assigned to a comic. Create an order in the Orders section and show the reduced stock. Change its status to Cancelled and show the copies return to inventory.
 
 ## Project repository and sources
 

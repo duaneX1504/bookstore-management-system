@@ -13,9 +13,11 @@ The sample inventory uses actual Marvel and DC comic titles. Marvel's official c
 ## Features
 
 - Manage comic editions, including title, series, issue range, publisher, lead creator, genre, format, condition, price, and stock.
+- Add, rename, and delete publishers and creators from their own sidebar sections. The database blocks deleting a publisher or creator that is still assigned to a comic.
 - Store publishers, creators, genres, customers, comics, orders, and order lines in related tables.
 - Create orders containing multiple comics. The API checks stock, stores the order and line items in a transaction, and reduces stock.
-- Cancel an order to restore the copies reserved for it.
+- Use the Orders section to create orders, change order status, cancel orders, and delete orders. Cancelling or deleting an active order returns its reserved copies to inventory.
+- Keep order line items and sale prices as a snapshot after placement. To change which comics were ordered, cancel or delete the order and create a replacement order.
 - Search by comic title, series, issue range, creator, or catalog code; filter by publisher.
 - Export the comic catalog as CSV.
 - Use prepared statements, input validation, JSON responses, HTTP status codes, and relational foreign-key constraints.
@@ -25,6 +27,12 @@ The sample inventory uses actual Marvel and DC comic titles. Marvel's official c
 The schema has seven tables. comics references publishers, creators, and genres. orders references customers. order_items connects orders to comics with a composite primary key (order_id, comic_id), which prevents duplicate lines for the same edition in one order. Each order line stores quantity and the unit price charged at the time of sale.
 
 Each comic record identifies one lead creator for this compact class project. A larger store could use a comic_creators junction table to record multiple writers, artists, inkers, and colorists per edition. See screenshots/database-erd.png for the relational diagram.
+
+## Using the sidebar and orders
+
+Each sidebar link jumps to its working section: Overview, Comic inventory, Orders, Publishers, and Creators. Publishers and creators can be added or renamed at any time. Deleting one that is still used by a comic is blocked; reassign or delete those comics first.
+
+The Orders section is functional. Use **Create order** to select a customer, choose one or more in-stock comics, and set quantities. The API checks inventory and reduces stock only when the complete order succeeds. Change an order's status from its row; setting it to **Cancelled** restores the reserved copies. Deleting an order also restores copies when needed. Order lines and the price charged are intentionally fixed after placement to preserve the sale record.
 
 ## Requirements
 

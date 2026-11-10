@@ -9,8 +9,9 @@
 2. Show the seven database tables and explain how publishers, creators, genres, customers, comics, orders, and order_items relate.
 3. Open the dashboard and point out catalog count, copies on hand, open orders, and low-stock editions.
 4. Add or edit a comic edition. Show its series, issue range, publisher, creator, genre, format, grade, price, and stock fields.
-5. Use Postman to create an order with comic IDs. Show the stock deduction, then cancel the order and show the stock restored.
-6. Close by describing the PHP/PDO API, MySQL foreign keys, and GitHub setup instructions.
+5. Open Publishers and Creators. Add or rename a record, and explain that deleting one still used by a comic is blocked by a foreign key.
+6. Open Orders, create an order for a customer, update its status, and cancel it to show the reserved stock return. Deleting an order also restores its stock; line items and charged prices are fixed after placement.
+7. Close by describing the PHP/PDO API, MySQL foreign keys, and GitHub setup instructions.
 
 ## Questions to prepare for
 
